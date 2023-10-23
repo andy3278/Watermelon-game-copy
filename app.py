@@ -1,6 +1,6 @@
 import pygame
 import math
-
+import random
 
 screen_width = 600
 screen_height = 800
@@ -37,6 +37,8 @@ box_left = 40 + white_radius
 box_right = 560 - white_radius
 
 balls = []
+balls_to_add = []
+balls_to_remove = []
 
 pygame.init()
 running = True
@@ -52,42 +54,65 @@ while running:
             # draw a white ball when mouse is clicked
             ball_y = event.pos[1]
             ball_x = event.pos[0]
-            balls.append([ball_x, ball_y, ball_speed, white, white_radius])
+            horizontal_speed = random.uniform(-1, 1)  # Random horizontal speed between -1 and 1
+            balls.append([ball_x, ball_y, ball_speed, horizontal_speed, white, white_radius])
             
     
-    i = 0
-    while i < len(balls):
+    for i in range(len(balls)):
         for j in range(i+1, len(balls)):
             dx = balls[i][0] - balls[j][0]
             dy = balls[i][1] - balls[j][1]
 
             distance = math.sqrt(dx **2 + dy **2)
-            if distance < 2 * white_radius:
+            if distance < 2 * balls[i][5]:
                 # check if the balls are of same color
-                if balls[i][3] == balls[j][3]:
-                    color_index = color_order.index(balls[i][3])
+                if balls[i][4] == balls[j][4]:
+                    color_index = color_order.index(balls[i][4])
                     if color_index + 1 < len(color_order):
                         # add a new ball with next color
-                        balls.append([balls[i][0], balls[i][1], balls[i][2] , color_order[color_index + 1], radius_order[color_index + 1]])
+                        # sum horizontal speed after collision
+                        balls_to_add.append([balls[i][0], balls[i][1], balls[i][2] , balls[i][3] + balls[j][3],  color_order[color_index + 1], radius_order[color_index + 1]])
                         # remove the balls of same color
-                        balls.remove(balls[i])
-                        balls.remove(balls[j])
-                        # update index after remove
-                        i -= 1
-                        break
-                    else:
-                        # update speed of both balls when they collide
-                        balls[i][2] *= -0.5
-                        balls[j][2] *= -0.5
-        i += 1
-            # bacasue downward in pygame is positive
+                    balls_to_remove.append(balls[i])
+                    balls_to_remove.append(balls[j])
+                    # update index after remove
+                    i -= 1
+                    break
+                else:
+                    # update speed of both balls when they collide
+                    balls[i][2] *= -0.5
+                    balls[j][2] *= -0.5
+                    balls[i][3] *= -0.5
+                    balls[j][3] *= -0.5
+
+    # remove and add balls
+    for ball in balls_to_remove:
+        if ball in balls:
+            balls.remove(ball)
+    for ball in balls_to_add:
+        balls.append(ball)
+    balls_to_remove.clear()
+    balls_to_add.clear()
     for ball in balls:
-        if ball[1] < 720 - ball[4]:
+        box_bottom = 720 - ball[5]
+        box_left = 40 + ball[5]
+        box_right = 560 - ball[5]
+        if ball[1] < box_bottom:
             ball[1] += ball[2]
         else:
-            ball[1] = 720 - ball[4]
+            ball[1] = box_bottom
             ball[2] *= -0.5
-        any_ball = pygame.draw.circle(screen, ball[3], (ball[0], ball[1]), ball[4])
+        
+        # update x position of ball
+        ball[0] += ball[3]
+        # check if ball is out of box horizontally
+        if ball[0] < box_left:
+            ball[0] = box_left + 1
+            ball[3] *= -0.5
+        elif ball[0] > box_right:
+            ball[0] = box_right - 1
+            ball[3] *= -0.5
+        any_ball = pygame.draw.circle(screen, ball[4], (ball[0], ball[1]), ball[5])
     # draw 3 lines to make a rectangle with upper side open
     pygame.draw.line(screen, white, (40, 40), (40, 720), 1)
     pygame.draw.line(screen, white, (40, 720), (560, 720), 1)
