@@ -5,6 +5,8 @@ import random
 screen_width = 600
 screen_height = 800
 
+skwed_probabitity = [0.7, 0.1, 0.05, 0.08, 0.04, 0.02, 0.01, 0, 0]
+
 black = (0,0,0)
 white = (255,255,255)
 red = (255,0,0)
@@ -32,7 +34,7 @@ hot_pink_score = 64
 purple_score = 128
 
 score = 0
-score_order = [white_score, red_score, yellow_score, green_score, blue_score, thistle_score, hot_pink_score, purple_score]
+score_order = [white_score, red_score, orange_score, yellow_score, green_score, blue_score, thistle_score, hot_pink_score, purple_score]
 
 # define ball speed and redius
 ball_speed = 1
@@ -58,6 +60,11 @@ pygame.init()
 running = True
 gaem_over = False
 
+index = range(len(color_order))
+random_int = random.choices(index, weights=skwed_probabitity, k=1)[0]
+next_ball_radius = radius_order[random_int]
+next_ball_color = color_order[random_int]
+
 while running:
 
     screen.fill(black)
@@ -66,12 +73,22 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            # draw a white ball when mouse is clicked
-            ball_y = event.pos[1]
-            ball_x = event.pos[0]
-            horizontal_speed = 0 
-            is_dropping = True
-            balls.append([ball_x, ball_y, ball_speed, horizontal_speed, white, white_radius, is_dropping])
+            if event.pos[0] > 40 and event.pos[0]<560 and event.pos[1]< 40:
+                # draw a ball when mouse is clicked
+                ball_x = event.pos[0]
+                ball_y = event.pos[1]
+                horizontal_speed = 0 
+                is_dropping = True
+                balls.append([ball_x, ball_y, ball_speed, horizontal_speed, next_ball_color, next_ball_radius, is_dropping])
+                next_index = random.choices(index, weights=skwed_probabitity, k=1)[0]
+                next_ball_color = color_order[next_index]
+                next_ball_radius = radius_order[next_index]
+    
+        elif event.type == pygame.MOUSEMOTION and event.pos[0] > 40 and event.pos[0]<560 and event.pos[1]< 40:
+            # draw next ball on mouse motion
+            mouse_x = event.pos[0]
+            mouse_y = event.pos[1]
+            pygame.draw.circle(screen, next_ball_color, (mouse_x, mouse_y), next_ball_radius)
             
     if not gaem_over:
         for i in range(len(balls)):
@@ -160,6 +177,20 @@ while running:
         pygame.draw.line(screen, white, (40, 40), (40, 720), 1)
         pygame.draw.line(screen, white, (40, 720), (560, 720), 1)
         pygame.draw.line(screen, white, (560, 720), (560, 40), 1)
+        # draw a warning line at top of box with red dotted line
+        dotted_line_y = 40
+        dotted_line_length = 4
+        dotted_line_space = 4
+        # grey color dotted line
+        dotted_line_color = (128,128,128)
+        for x in range(40, 560, dotted_line_length + dotted_line_space):
+            pygame.draw.line(screen, dotted_line_color, (x, dotted_line_y), (x + dotted_line_length, dotted_line_y), 1)
+        
+        # draw color order
+        color_order_y = screen_height - 20  
+        color_order_spacing = 40  
+        for i, color in enumerate(color_order):
+            pygame.draw.circle(screen, color, (40 + i * color_order_spacing, color_order_y), 10)
 
         # draw score
         font = pygame.font.Font(None, 36)
